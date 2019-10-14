@@ -1,0 +1,44 @@
+import numpy as np
+from collections import namedtuple
+
+Result = namedtuple('Result', ('nfev', 'cost', 'gradnorm', 'x'))
+Result.__doc__ = "Результаты оптимизации"
+
+def gauss_newton(y, f, j, x0, k, tol):
+    x = np.array(x0, dtype=float)
+    cost = []
+    i = 0
+    while True:
+        i += 1
+        r = y - f(*x)
+        cost.append(0.5 * np.dot(r, r))
+        jac = j(*x)
+        g = np.dot(jac.T, r)
+        delta_x = np.linalg.solve(np.dot(jac.T, jac), g)
+        x += k * delta_x
+        if np.linalg.norm(delta_x) <= tol * np.linalg.norm(x):
+            break
+    cost = np.array(cost)
+    return Result(nfev=i, cost=cost, gradnorm=np.linalg.norm(g), x=x)
+    
+def f(t, a, b, c):
+    return b * np.exp(-a * t) * t ** 2 * c
+
+
+def j(t, a, b, c):
+    jac = np.empty((t.size, 3), dtype=float)
+    jac[:,0] = -b * t ** 3 * np.exp(-a * t)
+    jac[:, 1] = t ** 2 * np.exp(-a * t)
+    jac[:, 2] = 1.0
+    return jac
+_a=0.75
+_b=2
+_c=0.3
+_x=(_a,_b,_c)
+
+_n=30
+t=np.linspace(0, 10, _n)
+y = f(t, _a, _b, _c) + np.random.normal(t.size)
+
+r=gauss_newton(y, lambda *args: f(t, *args), lambda *args: j(t, *args), [1.0,4.0,1.0], 0.3, 1e-3)
+print(r)
