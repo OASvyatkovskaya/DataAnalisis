@@ -1,8 +1,11 @@
+from scipy import integrate
 import numpy as np
 from collections import namedtuple
 
+#
 Result = namedtuple('Result', ('nfev', 'cost', 'gradnorm', 'x'))
 Result.__doc__ = "Результаты оптимизации"
+
 
 def gauss_newton(y, f, j, x0, k, tol):
     x = np.array(x0, dtype=float)
@@ -20,25 +23,43 @@ def gauss_newton(y, f, j, x0, k, tol):
             break
     cost = np.array(cost)
     return Result(nfev=i, cost=cost, gradnorm=np.linalg.norm(g), x=x)
-    
-def f(t, a, b, c):
-    return b * np.exp(-a * t) * t ** 2 * c
 
 
-def j(t, a, b, c):
-    jac = np.empty((t.size, 3), dtype=float)
-    jac[:,0] = -b * t ** 3 * np.exp(-a * t)
-    jac[:, 1] = t ** 2 * np.exp(-a * t)
-    jac[:, 2] = 1.0
+file = open("jla_mub.txt", "r")  # Read File
+file.read(7)  # Skip first symbols
+arr = file.read().split()  # Array: [z1, mu1, z2, mu2, ...]
+
+RedshiftArray = arr[0::2]  # SubArray from 1st element with step 2
+DistanceArray = arr[1::2]  # SubArray from 2nd element with step 2
+
+RedshiftArray = list(map(float, RedshiftArray))  # String array to float array
+DistanceArray = list(map(float, DistanceArray))  # String array to float array
+
+
+def integral(O, z1):
+    return 1 / np.sqrt((1 - O)(1 + z1) ** 3 + O)
+
+
+def intder(O, z1):
+    return 0.5 * (1 + z1) ** 3 / (np.sqrt((1 - O)(1 + z1) ** 3 + O)) ** 3
+
+
+def f(t, H0, O):
+    return 5* np.log (3 * 10 ** 11 / H0 * (1 + t[0]) * integrate.quad(integral, 0, t[0], O))-5
+
+
+def j(t, H0, O):
+    jac = np.empty((len(t), 2), dtype = float)
+    jac[:, 0] = -3 * 10 ** 11 / H0 ** 2 * (1 + t) * integrate.quad(integral, 0, t, O)
+    jac[:, 1] = 3 * 10 ** 11 / H0 * (1 + t) * integrate.quad(intder, 0, t, O)
     return jac
-_a=0.75
-_b=2
-_c=0.3
-_x=(_a,_b,_c)
 
-_n=30
-t=np.linspace(0, 10, _n)
-y = f(t, _a, _b, _c) + np.random.normal(t.size)
 
-r=gauss_newton(y, lambda *args: f(t, *args), lambda *args: j(t, *args), [1.0,4.0,1.0], 0.3, 1e-3)
+_H0 = 50
+_O = 0.5
+t = RedshiftArray
+x0 = [_H0, _O]
+y = DistanceArray
+
+r = gauss_newton(y, lambda *args: f(t, *args), lambda *args: j(t, *args), x0, 0.3, 1e-3)
 print(r)
