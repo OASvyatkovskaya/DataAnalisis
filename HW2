@@ -65,5 +65,5 @@ x0 = [_H0, _O]
 _y = DistanceArray
 print(_y)
 print(f(_z, _H0, _O))
-r = gauss_newton(_y, lambda *args: f(_z, *args), lambda *args: j(_z, *args), x0, 0.3, 1e-3)
+r = gauss_newton(_y, lambda *args: f(_z, *args), lambda *args: j(_z, *args), x0, 1, 1e-4)
 print(r)
