@@ -53,8 +53,8 @@ def f(t, H0, O):  # function mu=
 def j(t, H0, O):  # handmade jacobian
     jac = np.empty((len(t), 2), dtype=float)
     for i in range(len(t)):
-        jac[i, 0] = 5/(np.log10(((3 * 10 ** 11) / H0) * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0]))*(-3 * 10 ** 11 / H0 ** 2 * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0])
-        jac[i, 1] = 5/(np.log10(((3 * 10 ** 11) / H0) * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0]))*(3 * 10 ** 11 / H0 * (1 + t[i]) * integrate.quad(intder, 0, t[i], args=(O,))[0])
+        jac[i, 0] = 5/(((3 * 10 ** 11) / H0) * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0])*(-3 * 10 ** 11 / H0 ** 2 * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0])
+        jac[i, 1] = 5/(((3 * 10 ** 11) / H0) * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0])*(3 * 10 ** 11 / H0 * (1 + t[i]) * integrate.quad(intder, 0, t[i], args=(O,))[0])
     return jac
 
 
