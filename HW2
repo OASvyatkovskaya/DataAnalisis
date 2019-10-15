@@ -25,45 +25,50 @@ def gauss_newton(y, f, j, x0, k, tol):
     return Result(nfev=i, cost=cost, gradnorm=np.linalg.norm(g), x=x)
 
 
+# def lm(y, f, j, x0, lmbd0=1e-2, nu=2, tol=1e-4):
+#     pass
+
+
 file = open("jla_mub.txt", "r")  # Read File
-file.read(7)  # Skip first symbols
+file.read(6)  # Skip first symbols
 arr = file.read().split()  # Array: [z1, mu1, z2, mu2, ...]
 
 RedshiftArray = arr[0::2]  # SubArray from 1st element with step 2
 DistanceArray = arr[1::2]  # SubArray from 2nd element with step 2
 
-RedshiftArray = list(map(float, RedshiftArray))  # String array to float array
-DistanceArray = list(map(float, DistanceArray))  # String array to float array
+RedshiftArray = np.asarray(RedshiftArray, dtype=float)
+DistanceArray = np.asarray(DistanceArray, dtype=float)  # String array to float array
+
+def integral(O, z1):  # integral in function
+    return 1 / np.sqrt((1 - O) * ((1 + z1) ** 3) + O)
 
 
-def integral(O, z1):#integral in function
-    return 1 / np.sqrt((1 - O)*(1 + z1) ** 3 + O)
+def intder(O, z1):  # derivative of integrale
+    return 0.5 * ((1 + z1) ** 3 + 1) / (np.sqrt((1 - O) * (1 + z1) ** 3 + O)) ** 3
 
 
-def intder(O, z1):#derivative of integrale
-    return 0.5 * ((1 + z1) ** 3 + 1) / (np.sqrt((1 - O)*(1 + z1) ** 3 + O)) ** 3
-
-
-def f(t, H0, O):#function mu=
-    theoreticaldata=np.empty(len(t))
+def f(t, H0, O):  # function mu=
+    theoreticaldata = np.empty(len(t))
     for i in range(len(t)):
-        theoreticaldata[i]=(5* np.log (3 * 10 ** 11 / H0 * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0])-5)
+        theoreticaldata[i] = (5 * np.log(((3 * 10 ** 11) / H0) * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0]) - 5)
     return theoreticaldata
 
 
-def j(t, H0, O):#handmade jacobian
-    jac = np.empty((len(t), 2), dtype = float)
+def j(t, H0, O):  # handmade jacobian
+    jac = np.empty((len(t), 2), dtype=float)
     for i in range(len(t)):
-        jac[i,0]=( -3 * 10 ** 11 / H0 ** 2 * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0])
-        jac[i, 1]=3 * 10 ** 11 / H0 * (1 + t[i]) * integrate.quad(intder, 0, t[i], args=(O,))[0]
+        jac[i, 0] = (-3 * 10 ** 11 / H0 ** 2 * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0])
+        jac[i, 1] = 3 * 10 ** 11 / H0 * (1 + t[i]) * integrate.quad(intder, 0, t[i], args=(O,))[0]
     return jac
+
 
 _H0 = 50
 _O = 0.5
 _z = RedshiftArray
 x0 = [_H0, _O]
 _y = DistanceArray
-print(_y)
-print(f(_z,_H0,_O))
+print(_z)
+print(f(_z, _H0, _O))
 r = gauss_newton(_y, lambda *args: f(_z, *args), lambda *args: j(_z, *args), x0, 0.3, 1e-3)
 print(r)
+
