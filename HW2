@@ -36,30 +36,34 @@ RedshiftArray = list(map(float, RedshiftArray))  # String array to float array
 DistanceArray = list(map(float, DistanceArray))  # String array to float array
 
 
-def integral(O, z1):
-    return 1 / np.sqrt((1 - O)(1 + z1) ** 3 + O)
+def integral(O, z1):#integral in function
+    return 1 / np.sqrt((1 - O)*(1 + z1) ** 3 + O)
 
 
-def intder(O, z1):
-    return 0.5 * (1 + z1) ** 3 / (np.sqrt((1 - O)(1 + z1) ** 3 + O)) ** 3
+def intder(O, z1):#derivative of integrale
+    return 0.5 * ((1 + z1) ** 3 + 1) / (np.sqrt((1 - O)*(1 + z1) ** 3 + O)) ** 3
 
 
-def f(t, H0, O):
-    return 5* np.log (3 * 10 ** 11 / H0 * (1 + t[0]) * integrate.quad(integral, 0, t[0], O))-5
+def f(t, H0, O):#function mu=
+    theoreticaldata=np.empty(len(t))
+    for i in range(len(t)):
+        theoreticaldata[i]=(5* np.log (3 * 10 ** 11 / H0 * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0])-5)
+    return theoreticaldata
 
 
-def j(t, H0, O):
+def j(t, H0, O):#handmade jacobian
     jac = np.empty((len(t), 2), dtype = float)
-    jac[:, 0] = -3 * 10 ** 11 / H0 ** 2 * (1 + t) * integrate.quad(integral, 0, t, O)
-    jac[:, 1] = 3 * 10 ** 11 / H0 * (1 + t) * integrate.quad(intder, 0, t, O)
+    for i in range(len(t)):
+        jac[i,0]=( -3 * 10 ** 11 / H0 ** 2 * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0])
+        jac[i, 1]=3 * 10 ** 11 / H0 * (1 + t[i]) * integrate.quad(intder, 0, t[i], args=(O,))[0]
     return jac
-
 
 _H0 = 50
 _O = 0.5
-t = RedshiftArray
+_z = RedshiftArray
 x0 = [_H0, _O]
-y = DistanceArray
-
-r = gauss_newton(y, lambda *args: f(t, *args), lambda *args: j(t, *args), x0, 0.3, 1e-3)
+_y = DistanceArray
+print(_y)
+print(f(_z,_H0,_O))
+r = gauss_newton(_y, lambda *args: f(_z, *args), lambda *args: j(_z, *args), x0, 0.3, 1e-3)
 print(r)
