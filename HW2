@@ -1,4 +1,4 @@
-from scipy import integrate
+from scipy import integrate, math
 import numpy as np
 from collections import namedtuple
 
@@ -40,6 +40,7 @@ RedshiftArray = np.asarray(RedshiftArray, dtype=float)
 DistanceArray = np.asarray(DistanceArray, dtype=float)  # String array to float array
 
 def integral(O, z1):  # integral in function
+    print(z1)
     return 1 / np.sqrt((1 - O) * ((1 + z1) ** 3) + O)
 
 
@@ -67,7 +68,7 @@ _O = 0.5
 _z = RedshiftArray
 x0 = [_H0, _O]
 _y = DistanceArray
-print(j(_z,_H0,_O))
+# print(j(_z,_H0,_O))
+print(_z)
 # print(f(_z,_H0,_O))
-r = gauss_newton(_y, lambda *args: f(_z, *args), lambda *args: j(_z, *args), x0, 1, 1e-4)
-print(r)
+r = gauss_newton(_y, lambda *args: f(_z, *args), lambda *args: j(_z, *args), x0, 0.3, 1e-4)
