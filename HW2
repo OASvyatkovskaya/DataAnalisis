@@ -39,27 +39,32 @@ DistanceArray = arr[1::2]  # SubArray from 2nd element with step 2
 RedshiftArray = np.asarray(RedshiftArray, dtype=float)
 DistanceArray = np.asarray(DistanceArray, dtype=float)  # String array to float array
 
-def integral(O, z1):  # integral in function
-    print(z1)
-    return 1 / np.sqrt((1 - O) * ((1 + z1) ** 3) + O)
 
-
-def intder(O, z1):  # derivative of integrale
-    return 0.5 * ((1 + z1) ** 3 - 1) / (np.sqrt((1 - O) * (1 + z1) ** 3 + O)) ** 3
+# def integral(z1):  # integral in function
+#     print(z1)
+#     O = 50
+#     return 1 / np.sqrt((1 - O) * ((1 + z1) ** 3) + O)
+#
+# def intder(O, z1):  # derivative of integrale
+#     return 0.5 * ((1 + z1) ** 3 - 1) / (np.sqrt((1 - O) * (1 + z1) ** 3 + O)) ** 3
 
 
 def f(t, H0, O):  # function mu=
     theoreticaldata = np.empty(len(t))
+    integral = lambda x: 1 / math.sqrt((1 - O) * ((1 + x) ** 3) + O)
     for i in range(len(t)):
-        theoreticaldata[i] = (5 * np.log10(((3 * 10 ** 11) / H0) * (1 + t[i]) * integrate.quad(integral, 0, t[i], args=(O,))[0]) - 5)
+        theoreticaldata[i] = (
+                    5 * np.log10(((3 * 10 ** 11) / H0) * (1 + t[i]) * integrate.quad(integral, 0, t[i])[0]) - 5)
     return theoreticaldata
 
 
 def j(t, H0, O):  # handmade jacobian
     jac = np.empty((len(t), 2), dtype=float)
+    intder = lambda x: 0.5 * ((1 + x) ** 3 - 1) / (np.sqrt((1 - O) * (1 + x) ** 3 + O)) ** 3
+    integral = lambda x: 1 / math.sqrt((1 - O) * ((1 + x) ** 3) + O)
     for i in range(len(t)):
-        jac[i, 0] = -5/H0 / np.log(10)
-        jac[i, 1] = 5 * integrate.quad(intder, 0, t[i], args=(O,))[0]/integrate.quad(integral, 0, t[i], args=(O,))[0] / np.log(10)
+        jac[i, 0] = -5 / H0 / np.log(10)
+        jac[i, 1] = 5 * integrate.quad(intder, 0, t[i])[0] / integrate.quad(integral, 0, t[i])[0] / np.log(10)
     return jac
 
 
@@ -68,7 +73,5 @@ _O = 0.5
 _z = RedshiftArray
 x0 = [_H0, _O]
 _y = DistanceArray
-# print(j(_z,_H0,_O))
-print(_z)
-# print(f(_z,_H0,_O))
 r = gauss_newton(_y, lambda *args: f(_z, *args), lambda *args: j(_z, *args), x0, 0.3, 1e-4)
+print(r)
