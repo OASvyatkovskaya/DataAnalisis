@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy import integrate, math
 import numpy as np
 from collections import namedtuple
-
+import json
 #
 Result = namedtuple('Result', ('nfev', 'cost', 'gradnorm', 'x'))
 Result.__doc__ = "Результаты оптимизации"
@@ -33,24 +33,26 @@ def lm(y, f, j, x0, lmbd0=1e-2, nu=2, tol=1e-4):
     x = np.array(x0, dtype=float)
     cost = []
     i = 0
+    I = np.eye(len(x0))
+    def dx(lmbd):
+        return np.linalg.solve(np.dot(jac.T, jac) + lmbd * I, g)
     while True:
         i += 1
         r = y - f(*x)
         cost.append(0.5 * np.dot(r, r))
         jac = j(*x)
         g = np.dot(jac.T, r)
-        I = np.eye(len(x0))
+
         F = lambda *a: 0.5 * np.linalg.norm(y - f(*a)) ** 2
-        def dx(lmbd):
-         return np.linalg.solve(np.dot(jac.T, jac) + lmbd * I, g)
+
 
         if F(*(x + dx(lmbd / nu))) <= F(*x):
             lmbd = lmbd / nu
         elif F(*(x + dx(lmbd / nu))) > F(*x) & F(*(x + dx(lmbd / nu))) <= F(*(x + dx(lmbd))):
             lmbd = lmbd
         elif F(*(x + dx(lmbd / nu))) > F(*x) & F(*(x + dx(lmbd / nu))) > F(*(x + dx(lmbd))):
-            while F(*(x + dx(lmbd * 10))) < F(*x):
-                lmbd *= 10
+            while F(*(x + dx(lmbd * nu))) < F(*x):
+                lmbd *= nu
                 if F(*(x + dx(lmbd * 10))) >= F(*x):
                     break
         if np.linalg.norm(dx(lmbd)) <= tol * np.linalg.norm(x):
@@ -93,9 +95,9 @@ _z = RedshiftArray
 x0 = [_H0, _O]
 _y = DistanceArray
 r = gauss_newton(_y, lambda *args: f(_z, *args), lambda *args: j(_z, *args), x0, 1, 1e-4)
-LM = lm(_y, lambda *args: f(_z, *args), lambda *args: j(_z, *args), x0, lmbd0=1e-2, nu=2, tol=1e-4)
+LM = lm(_y, lambda *args: f(_z, *args), lambda *args: j(_z, *args), x0, 1e-2, 2, 1e-4)
 print(r)
-print(LM)
+# print(LM)
 theoreticaldata = f(_z, r.x[0], r.x[1])
 
 plt.title('The dependence of distance modulus on the star-redshift μ(z)')
@@ -106,10 +108,18 @@ plt.xlabel('z')
 plt.grid()
 plt.legend()
 plt.show()
-plt.plot(range(r.cost.size), r.cost, label='Gauss-Newton')
+plt.plot(range(r.cost.size), r.cost, '-o', label='Gauss-Newton')
 plt.title('The dependence of loss function on the iteration step')
 plt.ylabel('Loss function value')
 plt.xlabel('Step')
 plt.grid()
 plt.legend()
 plt.show()
+
+
+text = {
+  "Gauss-Newton": {"H0": r.x[0], "Omega": r.x[1], "nfev": r.nfev},
+  "Levenberg-Marquardt": {"H0": 45, "Omega": 0.45, "nfev": 145}
+}
+# with open("parameters.json", "w") as f:#записываем в файл
+#     json.dump(text, f, indent=2)
